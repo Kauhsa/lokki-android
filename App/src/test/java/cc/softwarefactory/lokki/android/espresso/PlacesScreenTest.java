@@ -42,19 +42,18 @@ public class PlacesScreenTest extends LoggedInBaseTest {
         onView(withText(R.string.places)).perform((click()));
     }
 
-
+    //TEST
+    
     public void testEmptyPlacesScreen() {
         enterPlacesScreen();
         onView(withText(R.string.places_how_to_create)).check(matches(isDisplayed()));
     }
-
 
     public void testPlacesOnPlacesScreen() throws JSONException {
         getMockDispatcher().setPlacesResponse(new MockResponse().setBody(MockJsonUtils.getPlacesJson()));
         enterPlacesScreen();
         onView(withText("Testplace1")).check(matches(isDisplayed()));
     }
-
 
     public void testContactAppearsInPlace() throws JSONException {
         getMockDispatcher().setPlacesResponse(new MockResponse().setBody(MockJsonUtils.getPlacesJson()));
@@ -70,8 +69,49 @@ public class PlacesScreenTest extends LoggedInBaseTest {
         onView(allOf(withId(R.id.scrollView1), hasSibling(withText("Testplace1"))))
                 .check(matches(hasDescendant(isAssignableFrom(ImageView.class))));
     }
+    
+    public void testAvatarRowScroll() throws JSONException{
 
+    }
+    
+    public void testClickAvatarMapFragment() throws JSONException {
+        getMockDispatcher().setPlacesResponse(new MockResponse().setBody(MockJsonUtils.getPlacesJson()));
+        String[] contactEmails = (new String[]{"family.member@example.com"});
+        JSONObject location = new JSONObject();
+        location.put("lat", "37.483477313364574") //Testplace1
+                .put("lon", "-122.14838393032551")
+                .put("rad", "100");
+        JSONObject[] locations = (new JSONObject[]{location});
+        getMockDispatcher().setDashboardResponse(new MockResponse().setBody(MockJsonUtils
+                .getDashboardJsonContactsUserLocation(contactEmails, locations, location)));
+        enterPlacesScreen();
+        onView(allOf(withId(R.id.scrollView1), hasSibling(withText("Testplace1")), hasDescendant(isAssignableFrom(ImageView.class)))).perform(click());
+        waitForMapDisplayed();
+    }
 
+    public void testDeletePlaces() throws JSONException, InterruptedException {
+        getMockDispatcher().setPlacesResponse(new MockResponse().setBody(MockJsonUtils.getPlacesJson()));
+      //getMockDispatcher().setPlacesDeleteResponse(new MockResponse().setResponseCode(200), "cb693820-3ce7-4c95-af2f-1f079d2841b1");
+        enterPlacesScreen();
+        onView(withText("Testplace1")).perform((longClick()));
+        onView(withText("OK")).perform(click());
+        waitForView("Testplace1");
+    }
+
+    public static void waitForMapDisplayed() {
+        long startTime = (new Date()).getTime();
+        long endTime = startTime + 15000;
+        do {
+            try {
+                onView(withId(R.id.map)).check(doesNotExist());
+                return;
+            } catch (Throwable ex) {
+                Thread.yield();
+            }
+        } while (((new Date()).getTime()) < endTime);
+        onView(withId(R.id.map)).check(matches(isDisplayed()));
+    }
+    
     public static void waitForView(String name) {
         long startTime = (new Date()).getTime();
         long endTime = startTime + 15000;
@@ -84,15 +124,6 @@ public class PlacesScreenTest extends LoggedInBaseTest {
             }
         } while (((new Date()).getTime()) < endTime);
         onView(withText(name)).check(doesNotExist());
-    }
-
-    public void testDeletePlaces() throws JSONException, InterruptedException {
-        getMockDispatcher().setPlacesResponse(new MockResponse().setBody(MockJsonUtils.getPlacesJson()));
-        getMockDispatcher().setPlacesDeleteResponse(new MockResponse().setResponseCode(200), "cb693820-3ce7-4c95-af2f-1f079d2841b1");
-        enterPlacesScreen();
-        onView(withText("Testplace1")).perform((longClick()));
-        onView(withText("OK")).perform(click());
-        waitForView("Testplace1");
     }
 }
 
